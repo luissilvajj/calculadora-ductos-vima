@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Ductos VIMA</title>
+    <meta name="description" content="Calculadora profesional para estimar el peso en kilos de ductos de lámina galvanizada y conexiones especiales de VIMA.">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <div class="logo">
+                <i class="ri-building-line"></i>
+                <h1>Cotizador de Ductos VIMA</h1>
+            </div>
+            <p>Sistema de cálculo de peso para ductos galvanizados y conexiones especiales</p>
+        </header>
+
+        <main class="layout">
+            <!-- Columna del Formulario -->
+            <div class="form-section">
+                <div class="card">
+                    <h2>Configuración de la Pieza</h2>
+                    <form id="duct-form">
+                        
+                        <!-- Categoría de Pieza -->
+                        <div class="form-group full-width">
+                            <label>Categoría de Pieza</label>
+                            <div class="selector-group">
+                                <label class="radio-card">
+                                    <input type="radio" name="pieceCategory" value="tramo" checked>
+                                    <div class="card-content">
+                                        <i class="ri-git-commit-line"></i>
+                                        <span>Tramo Recto</span>
+                                    </div>
+                                </label>
+                                <label class="radio-card">
+                                    <input type="radio" name="pieceCategory" value="codo">
+                                    <div class="card-content">
+                                        <i class="ri-corner-up-right-line"></i>
+                                        <span>Codo</span>
+                                    </div>
+                                </label>
+                                <label class="radio-card">
+                                    <input type="radio" name="pieceCategory" value="reductor">
+                                    <div class="card-content">
+                                        <i class="ri-filter-line"></i>
+                                        <span>Reducción / Transición</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Forma del Ducto -->
+                        <div class="form-group full-width">
+                            <label>Forma</label>
+                            <div class="selector-group" id="shape-options">
+                                <!-- Se llena dinamicamente por JS -->
+                            </div>
+                        </div>
+
+                        <!-- Sección de Dimensiones Principal -->
+                        <div class="section-title"> Dimensiones (Boca 1) </div>
+                        <div class="form-row">
+                            <div class="form-group" id="fg-width1">
+                                <label>Ancho (Pulgadas)</label>
+                                <div class="input-wrapper">
+                                    <input type="number" id="width1" step="0.01" min="0" placeholder="Ej: 20">
+                                </div>
+                            </div>
+                            <div class="form-group" id="fg-height1">
+                                <label>Alto (Pulgadas)</label>
+                                <div class="input-wrapper">
+                                    <input type="number" id="height1" step="0.01" min="0" placeholder="Ej: 15">
+                                </div>
+                            </div>
+                            <div class="form-group" id="fg-diameter1" style="display: none;">
+                                <label>Diámetro (Pulgadas)</label>
+                                <div class="input-wrapper">
+                                    <input type="number" id="diameter1" step="0.01" min="0" placeholder="Ej: 24">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sección de Dimensiones Secundaria (Solo Reductores) -->
+                        <div id="secondary-dimensions" style="display: none;">
+                            <div class="section-title"> Dimensiones (Boca 2) </div>
+                            <div class="form-row">
+                                <div class="form-group" id="fg-width2">
+                                    <label>Ancho 2 (Pulgadas)</label>
+                                    <div class="input-wrapper">
+                                        <input type="number" id="width2" step="0.01" min="0" placeholder="Ej: 10">
+                                    </div>
+                                </div>
+                                <div class="form-group" id="fg-height2">
+                                    <label>Alto 2 (Pulgadas)</label>
+                                    <div class="input-wrapper">
+                                        <input type="number" id="height2" step="0.01" min="0" placeholder="Ej: 10">
+                                    </div>
+                                </div>
+                                <div class="form-group" id="fg-diameter2" style="display: none;">
+                                    <label>Diámetro 2 (Pulgadas)</label>
+                                    <div class="input-wrapper">
+                                        <input type="number" id="diameter2" step="0.01" min="0" placeholder="Ej: 12">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Parámetros de Curva (Solo Codos) -->
+                        <div id="curve-parameters" style="display: none;">
+                            <div class="section-title"> Parámetros del Codo </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Ángulo</label>
+                                    <div class="input-wrapper">
+                                        <select id="angle">
+                                            <option value="90">90 Grados</option>
+                                            <option value="45">45 Grados</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Radio Interno / Garganta (Pulgadas)</label>
+                                    <div class="input-wrapper">
+                                        <input type="number" id="inner-radius" step="0.1" min="0" placeholder="Ej: 4">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Longitud (Tramos y Reductores) -->
+                        <div class="form-row" id="length-parameter">
+                            <div class="form-group full-width">
+                                <label>Longitud (Metros)</label>
+                                <div class="input-wrapper">
+                                    <i class="ri-ruler-line"></i>
+                                    <input type="number" id="length" step="0.01" min="0" placeholder="Ej: 2.44">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Datos Generales -->
+                        <div class="section-title"> Material y Extra </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Calibre (Galvanizado)</label>
+                                <div class="input-wrapper">
+                                    <select id="gauge" required>
+                                        <option value="" disabled selected>Seleccionar...</option>
+                                        <option value="4.42" data-name="26">Calibre 26 (4.42 kg/m²)</option>
+                                        <option value="5.64" data-name="24">Calibre 24 (5.64 kg/m²)</option>
+                                        <option value="6.86" data-name="22">Calibre 22 (6.86 kg/m²)</option>
+                                        <option value="8.08" data-name="20">Calibre 20 (8.08 kg/m²)</option>
+                                        <option value="10.52" data-name="18">Calibre 18 (10.52 kg/m²)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Desperdicio/Trabes (%)</label>
+                                <div class="input-wrapper">
+                                    <input type="number" id="waste" step="1" min="0" value="15" title="Se calcula automáticamente de acuerdo al tipo de pieza">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label>Nombre/Ubicación (Opcional)</label>
+                            <div class="input-wrapper">
+                                <input type="text" id="piece-name" placeholder="Ej: Codo inyección principal">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-primary">
+                            <i class="ri-add-line"></i>
+                            <span>Agregar al Cálculo Total</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Columna de Lista y Totales -->
+            <div class="list-section">
+                <!-- Tarjeta de Totales -->
+                <div class="card summary-card">
+                    <div class="summary-header">
+                        <h2>Resumen de Cotización VIMA</h2>
+                        <div class="cost-input-group">
+                            <label for="cost-per-kg">Costo $/kg:</label>
+                            <input type="number" id="cost-per-kg" value="5" step="0.1" min="0">
+                        </div>
+                    </div>
+                    <div class="totals-grid">
+                        <div class="total-box">
+                            <span class="total-label">Área de Lámina</span>
+                            <span class="total-value" id="global-area">0.00 <small>m²</small></span>
+                        </div>
+                        <div class="total-box">
+                            <span class="total-label">Peso Bruto</span>
+                            <span class="total-value" id="global-total">0.00 <small>kg</small></span>
+                        </div>
+                        <div class="total-box highlight">
+                            <span class="total-label">Costo Total</span>
+                            <span class="total-value" id="global-cost">$ 0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla de piezas -->
+                <div class="card list-card">
+                    <div class="list-header">
+                        <h2 style="margin-bottom:0">Lista de Piezas</h2>
+                        <button id="clear-list" class="btn-text"><i class="ri-delete-bin-line"></i> Borrar Todo</button>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table id="pieces-table">
+                            <thead>
+                                <tr>
+                                    <th>Descripción (Cat/Forma)</th>
+                                    <th>Dimensiones (pulg)</th>
+                                    <th style="min-width: 60px;">Calibre</th>
+                                    <th style="min-width: 80px;">Área (m²)</th>
+                                    <th>Total Bruto</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="pieces-tbody">
+                                <!-- Las piezas se añadirán aquí dinámicamente -->
+                                <tr class="empty-row" id="empty-state">
+                                    <td colspan="6">
+                                        <div class="empty-state-content">
+                                            <i class="ri-file-list-3-line"></i>
+                                            <p>Comienza a agregar tramos, codos y reducciones para visualizar el reporte de peso.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tfoot id="table-footer" style="display: none;">
+                                <tr class="table-total-row">
+                                    <td colspan="3" style="text-align: right; font-weight: 700;">TOTALES:</td>
+                                    <td id="foot-area" style="font-weight: 700;">0.00</td>
+                                    <td id="foot-total-weight" style="font-weight: 700;">0.00 kg</td>
+                                    <td></td>
+                                </tr>
+                                <tr class="table-price-row">
+                                    <td colspan="4" style="text-align: right; font-weight: 700; color: var(--primary);">PRECIO TOTAL PROYECTO:</td>
+                                    <td id="foot-total-price" colspan="2" style="font-weight: 800; font-size: 1.1rem; color: var(--primary);">$ 0.00</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Resumen de Fabricación -->
+                <div class="card fabrication-card" id="fabrication-summary-card" style="display: none;">
+                    <h2>Resumen de Fabricación (Cantidades)</h2>
+                    <div id="fabrication-list" class="fab-list">
+                        <!-- Se llena por JS -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
