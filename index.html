@@ -48,7 +48,14 @@
                                     <input type="radio" name="pieceCategory" value="reductor">
                                     <div class="card-content">
                                         <i class="ri-filter-line"></i>
-                                        <span>Reducción / Transición</span>
+                                        <span>Reducción</span>
+                                    </div>
+                                </label>
+                                <label class="radio-card">
+                                    <input type="radio" name="pieceCategory" value="accesorio">
+                                    <div class="card-content">
+                                        <i class="ri-tools-line"></i>
+                                        <span>Accesorio</span>
                                     </div>
                                 </label>
                             </div>
@@ -139,6 +146,32 @@
                                 <div class="input-wrapper">
                                     <i class="ri-ruler-line"></i>
                                     <input type="number" id="length" step="0.01" min="0" placeholder="Ej: 2.44">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Longitud del Ramal (Tees y Yees) -->
+                        <div class="form-row" id="length2-parameter" style="display: none;">
+                            <div class="form-group full-width">
+                                <label>Longitud del Ramal (Metros)</label>
+                                <div class="input-wrapper">
+                                    <i class="ri-ruler-2-line"></i>
+                                    <input type="number" id="length2" step="0.01" min="0" placeholder="Ej: 1.20">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Ángulo del Ramal (Yees) -->
+                        <div id="yee-parameters" style="display: none;">
+                            <div class="form-row">
+                                <div class="form-group full-width">
+                                    <label>Ángulo del Ramal</label>
+                                    <div class="input-wrapper">
+                                        <select id="yee-angle">
+                                            <option value="30">30 Grados</option>
+                                            <option value="45" selected>45 Grados</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
                         </div>
