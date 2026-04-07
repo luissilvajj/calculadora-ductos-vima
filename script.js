@@ -36,6 +36,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const gaugeSelect = document.getElementById('gauge');
     const wasteInput = document.getElementById('waste');
     const pieceNameInput = document.getElementById('piece-name');
+    const pieceZonaInput = document.getElementById('piece-zona');
+    const pieceSubzonaInput = document.getElementById('piece-subzona');
+    const pieceQtyInput = document.getElementById('piece-qty');
+    const pieceObsInput = document.getElementById('piece-obs');
+    const zonaDatalist = document.getElementById('zona-list');
+    const subzonaDatalist = document.getElementById('subzona-list');
     const clearListBtn = document.getElementById('clear-list');
     const costKgInput = document.getElementById('cost-per-kg');
 
@@ -249,7 +255,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const totalWeight = netWeight + wasteWeight;
 
         let pieceDescription = pieceNameInput.value.trim();
-        if (!pieceDescription) pieceDescription = category.toUpperCase();
+        if (!pieceDescription) pieceDescription = category === 'tramo' ? 'Tramo' : category === 'codo' ? 'Codo' : 'Reducción';
+
+        const pieceZona = pieceZonaInput.value.trim() || 'Sin Zona';
+        const pieceSubzona = pieceSubzonaInput.value.trim() || 'General';
+        const pieceQty = parseInt(pieceQtyInput.value) || 1;
+        const pieceObs = pieceObsInput.value.trim();
 
         // Breakdown for Tramos (Standard 1.20m sheet)
         let breakdown = "";
@@ -278,15 +289,30 @@ document.addEventListener('DOMContentLoaded', () => {
             netWeight: netWeight,
             wasteWeight: wasteWeight,
             totalWeight: totalWeight,
-            breakdown: breakdown
+            breakdown: breakdown,
+            zona: pieceZona,
+            subzona: pieceSubzona,
+            qty: pieceQty,
+            obs: pieceObs,
+            // Length or radius for display in PDF
+            lengthOrRadius: category === 'codo' ? (parseFloat(innerRadiusInput.value) ? innerRadiusInput.value + '" r' : '-') : (length > 0 ? length.toFixed(2) + ' m' : '-')
         };
 
         piecesList.push(newPiece);
         renderTable();
+        updateDatalistsUI();
 
-        // Limpiar un poco los inputs comunes pero sin borrar todo para facilitar el trabajo repetitivo
-        // pieceNameInput.value = '';
+        // Clear qty and obs for quick sequential entry
+        pieceQtyInput.value = '1';
+        pieceObsInput.value = '';
     });
+
+    function updateDatalistsUI() {
+        const zonas = [...new Set(piecesList.map(p => p.zona).filter(z => z !== 'Sin Zona'))];
+        const subzonas = [...new Set(piecesList.map(p => p.subzona).filter(s => s !== 'General'))];
+        zonaDatalist.innerHTML = zonas.map(z => `<option value="${z}">`).join('');
+        subzonaDatalist.innerHTML = subzonas.map(s => `<option value="${s}">`).join('');
+    }
 
     document.getElementById('clear-list').addEventListener('click', () => {
         if(piecesList.length > 0 && confirm("¿Borrar todo el historial de la cotización?")) {
@@ -408,4 +434,76 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     costKgInput.addEventListener('input', updateTotals);
+
+    // =====================
+    // PDF EXPORT FUNCTION
+    // =====================
+    document.getElementById('export-pdf').addEventListener('click', () => {
+        if (piecesList.length === 0) { alert('Agrega piezas antes de exportar.'); return; }
+        buildPrintView();
+        window.print();
+    });
+
+    function buildPrintView() {
+        const costPerKg = parseFloat(costKgInput.value) || 0;
+        const totalKg = piecesList.reduce((s, p) => s + p.totalWeight, 0);
+        const totalCost = totalKg * costPerKg;
+
+        document.getElementById('print-meta').textContent =
+            `Generado: ${new Date().toLocaleDateString('es-VE', {day:'2-digit',month:'long',year:'numeric'})}`;
+        document.getElementById('print-total-kg').textContent = totalKg.toFixed(2);
+        document.getElementById('print-total-cost').textContent =
+            `$ ${totalCost.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}`;
+
+        // Group by Zona > Subzona
+        const zonaMap = {};
+        piecesList.forEach(piece => {
+            if (!zonaMap[piece.zona]) zonaMap[piece.zona] = {};
+            if (!zonaMap[piece.zona][piece.subzona]) zonaMap[piece.zona][piece.subzona] = [];
+            zonaMap[piece.zona][piece.subzona].push(piece);
+        });
+
+        let html = '';
+        for (const zona in zonaMap) {
+            // Zona block weight
+            const zonaWeight = Object.values(zonaMap[zona]).flat().reduce((s, p) => s + p.totalWeight, 0);
+            html += `
+                <div class="print-zona-block">
+                    <div class="print-zona-header">${zona}</div>`;
+
+            for (const subzona in zonaMap[zona]) {
+                const pieces = zonaMap[zona][subzona];
+                html += `
+                    <div class="print-subzona-title">${subzona}</div>
+                    <table class="print-table">
+                        <thead>
+                            <tr>
+                                <th>Tipo de Pieza</th>
+                                <th>Medidas</th>
+                                <th>Longitud / Radio</th>
+                                <th>Cantidad</th>
+                                <th>Observaciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+                pieces.forEach(p => {
+                    html += `
+                            <tr>
+                                <td>${p.description}</td>
+                                <td>${p.dimensions}</td>
+                                <td>${p.lengthOrRadius}</td>
+                                <td style="text-align:center;">${p.qty}</td>
+                                <td>${p.obs || ''}</td>
+                            </tr>`;
+                });
+                html += `</tbody></table>`;
+            }
+
+            html += `
+                    <div class="print-zona-subtotal">Subtotal Zona: ${zonaWeight.toFixed(2)} kg</div>
+                </div>`;
+        }
+
+        document.getElementById('print-zones-content').innerHTML = html;
+    }
 });

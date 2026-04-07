@@ -167,10 +167,41 @@
                             </div>
                         </div>
 
+                        <div class="section-title"> Clasificación y Cantidad </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Zona</label>
+                                <div class="input-wrapper">
+                                    <input type="text" id="piece-zona" list="zona-list" placeholder="Ej: Sanitarios">
+                                    <datalist id="zona-list"></datalist>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Sub-zona</label>
+                                <div class="input-wrapper">
+                                    <input type="text" id="piece-subzona" list="subzona-list" placeholder="Ej: Inyección">
+                                    <datalist id="subzona-list"></datalist>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Tipo de Pieza</label>
+                                <div class="input-wrapper">
+                                    <input type="text" id="piece-name" placeholder="Ej: Tramo, Codo, Bota">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Cantidad</label>
+                                <div class="input-wrapper">
+                                    <input type="number" id="piece-qty" min="1" value="1">
+                                </div>
+                            </div>
+                        </div>
                         <div class="form-group full-width">
-                            <label>Nombre/Ubicación (Opcional)</label>
+                            <label>Observaciones (Opcional)</label>
                             <div class="input-wrapper">
-                                <input type="text" id="piece-name" placeholder="Ej: Codo inyección principal">
+                                <input type="text" id="piece-obs" placeholder="Ej: Lleva Damper, con pestaña">
                             </div>
                         </div>
 
@@ -213,7 +244,10 @@
                 <div class="card list-card">
                     <div class="list-header">
                         <h2 style="margin-bottom:0">Lista de Piezas</h2>
-                        <button id="clear-list" class="btn-text"><i class="ri-delete-bin-line"></i> Borrar Todo</button>
+                        <div style="display:flex; gap: 0.5rem; align-items: center;">
+                            <button id="export-pdf" class="btn-export"><i class="ri-file-pdf-line"></i> Exportar PDF</button>
+                            <button id="clear-list" class="btn-text"><i class="ri-delete-bin-line"></i> Borrar Todo</button>
+                        </div>
                     </div>
                     
                     <div class="table-container">
@@ -267,5 +301,17 @@
     </div>
 
     <script src="script.js"></script>
+
+    <!-- Vista de Impresión / Exportar PDF -->
+    <div id="print-export-view" style="display:none;">
+        <div class="print-header">
+            <h1>Cotizador de Ductos VIMA</h1>
+            <p id="print-meta"></p>
+        </div>
+        <div id="print-zones-content"></div>
+        <div class="print-footer">
+            <p>Total General: <strong id="print-total-kg"></strong> kg &nbsp;|&nbsp; Costo Total: <strong id="print-total-cost"></strong></p>
+        </div>
+    </div>
 </body>
 </html>
