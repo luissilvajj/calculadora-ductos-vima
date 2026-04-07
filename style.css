@@ -347,3 +347,120 @@ tfoot {
     padding-top: 0.5rem;
     font-size: 10pt;
 }
+
+/* ===================== */
+/* EDIT MODE             */
+/* ===================== */
+.btn-primary.edit-mode {
+    background: #b45309;
+}
+.btn-primary.edit-mode:hover { background: #92400e; }
+
+.btn-cancel-edit {
+    width: 100%;
+    margin-top: 0.5rem;
+    padding: 0.6rem;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.2s;
+}
+.btn-cancel-edit:hover { background: var(--input-bg); border-color: var(--secondary); }
+
+.btn-icon.edit-btn:hover { background: rgba(29, 78, 216, 0.1); color: var(--primary); }
+
+.edit-mode-banner {
+    background: #fffbeb;
+    border: 1px solid #fbbf24;
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    color: #92400e;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+/* ===================== */
+/* PROJECTS MODAL        */
+/* ===================== */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    backdrop-filter: blur(2px);
+}
+.modal-box {
+    background: var(--card-bg);
+    border-radius: 14px;
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 560px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+}
+.modal-header h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.modal-save-row {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+}
+.modal-save-row input {
+    flex: 1;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    outline: none;
+}
+.modal-save-row input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--input-focus); }
+.projects-list { display: flex; flex-direction: column; gap: 0.6rem; }
+.project-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    border-left: 4px solid var(--primary);
+}
+.project-item-info strong { display: block; font-size: 0.9rem; color: var(--text-main); }
+.project-item-info span { font-size: 0.75rem; color: var(--text-muted); }
+.project-item-actions { display: flex; gap: 0.4rem; }
+.btn-load { background: var(--primary); color: white; border: none; padding: 0.3rem 0.6rem; border-radius: 5px; font-size: 0.8rem; cursor: pointer; font-weight: 600; }
+.btn-load:hover { background: var(--primary-hover); }
+.btn-del { background: transparent; color: var(--danger); border: 1px solid rgba(239,68,68,0.3); padding: 0.3rem 0.6rem; border-radius: 5px; font-size: 0.8rem; cursor: pointer; }
+.btn-del:hover { background: rgba(239,68,68,0.1); }
+.no-projects { text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.9rem; }

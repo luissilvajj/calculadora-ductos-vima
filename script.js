@@ -1,4 +1,6 @@
 let piecesList = [];
+let editingPieceId = null;
+const STORAGE_KEY = 'vima_calculadora_projects';
 const INCH_TO_METER = 0.0254;
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -55,6 +57,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const fabCard = document.getElementById('fabrication-summary-card');
     const fabList = document.getElementById('fabrication-list');
+    const submitBtn = document.getElementById('submit-btn');
+    const cancelEditBtn = document.getElementById('cancel-edit-btn');
 
     // Generar opciones de Forma según la categoría
     function buildShapeOptions(category) {
@@ -459,17 +463,104 @@ document.addEventListener('DOMContentLoaded', () => {
             subzona: pieceSubzona,
             qty: pieceQty,
             obs: pieceObs,
-            lengthOrRadius: lengthOrRadiusDisplay
+            lengthOrRadius: lengthOrRadiusDisplay,
+            _raw: {
+                shape,
+                w1, h1, d1, w2, h2, d2,
+                length,
+                length2: parseFloat(length2Input.value || 0),
+                R_interno,
+                angle: parseFloat(angleInput.value || 90),
+                yeeAngle: parseFloat(document.getElementById('yee-angle')?.value || 45),
+                wastePercent: parseFloat(wasteInput.value) || 0
+            }
         };
 
-        piecesList.push(newPiece);
+        if (editingPieceId) {
+            // Replace existing piece
+            const idx = piecesList.findIndex(p => p.id === editingPieceId);
+            if (idx !== -1) {
+                newPiece.id = editingPieceId; // Keep same ID
+                piecesList[idx] = newPiece;
+            }
+            cancelEdit();
+        } else {
+            piecesList.push(newPiece);
+        }
+
         renderTable();
         updateDatalistsUI();
-
-        // Clear qty and obs for quick sequential entry
         pieceQtyInput.value = '1';
         pieceObsInput.value = '';
     });
+
+    cancelEditBtn.addEventListener('click', cancelEdit);
+
+    function cancelEdit() {
+        editingPieceId = null;
+        submitBtn.innerHTML = '<i class="ri-add-line"></i><span>Agregar al Cálculo Total</span>';
+        submitBtn.classList.remove('edit-mode');
+        cancelEditBtn.style.display = 'none';
+        form.reset();
+        buildShapeOptions('tramo');
+        updateFormUI();
+    }
+
+    function loadPieceForEdit(piece) {
+        editingPieceId = piece.id;
+        const raw = piece._raw;
+
+        // Set category
+        const catRadio = document.querySelector(`input[name="pieceCategory"][value="${piece.category}"]`);
+        if (catRadio) catRadio.checked = true;
+
+        // Rebuild shape options
+        buildShapeOptions(piece.category);
+
+        // Set shape
+        setTimeout(() => {
+            const shapeRadio = document.querySelector(`input[name="shape"][value="${raw.shape}"]`);
+            if (shapeRadio) shapeRadio.checked = true;
+            updateFormUI();
+
+            // Fill raw values
+            w1Input.value = raw.w1 || '';
+            h1Input.value = raw.h1 || '';
+            d1Input.value = raw.d1 || '';
+            w2Input.value = raw.w2 || '';
+            h2Input.value = raw.h2 || '';
+            d2Input.value = raw.d2 || '';
+            lengthInput.value = raw.length || '';
+            length2Input.value = raw.length2 || '';
+            innerRadiusInput.value = raw.R_interno || '';
+            if (raw.angle) angleInput.value = raw.angle;
+            const yeeAngleEl = document.getElementById('yee-angle');
+            if (yeeAngleEl && raw.yeeAngle) yeeAngleEl.value = raw.yeeAngle;
+            wasteInput.value = raw.wastePercent ?? '';
+
+            // Gauge
+            for (let i = 0; i < gaugeSelect.options.length; i++) {
+                if (gaugeSelect.options[i].dataset.name === piece.gauge) {
+                    gaugeSelect.selectedIndex = i; break;
+                }
+            }
+
+            // Classification fields
+            pieceNameInput.value = piece.description || '';
+            pieceZonaInput.value = piece.zona !== 'Sin Zona' ? piece.zona : '';
+            pieceSubzonaInput.value = piece.subzona !== 'General' ? piece.subzona : '';
+            pieceQtyInput.value = piece.qty || 1;
+            pieceObsInput.value = piece.obs || '';
+
+            // Update button
+            submitBtn.innerHTML = '<i class="ri-save-line"></i><span>Actualizar Pieza</span>';
+            submitBtn.classList.add('edit-mode');
+            cancelEditBtn.style.display = 'flex';
+
+            // Scroll to form
+            document.querySelector('.form-section').scrollIntoView({ behavior: 'smooth' });
+        }, 0);
+    }
 
     function updateDatalistsUI() {
         const zonas = [...new Set(piecesList.map(p => p.zona).filter(z => z !== 'Sin Zona'))];
@@ -517,7 +608,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td>
                         <strong style="color:var(--text-main); font-size:1.05rem;">${piece.totalWeight.toFixed(2)} kg</strong>
                     </td>
-                    <td style="text-align:right;">
+                    <td style="text-align:right; white-space:nowrap;">
+                        <button class="btn-icon edit-btn" data-id="${piece.id}" title="Editar" style="color:var(--primary);">
+                            <i class="ri-pencil-line"></i>
+                        </button>
                         <button class="btn-icon delete-btn" data-id="${piece.id}" title="Eliminar">
                             <i class="ri-delete-bin-line"></i>
                         </button>
@@ -531,6 +625,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     const idToRemove = e.currentTarget.dataset.id;
                     piecesList = piecesList.filter(p => p.id !== idToRemove);
                     renderTable();
+                });
+            });
+
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const idToEdit = e.currentTarget.dataset.id;
+                    const piece = piecesList.find(p => p.id === idToEdit);
+                    if (piece) loadPieceForEdit(piece);
                 });
             });
         }
@@ -599,9 +701,98 @@ document.addEventListener('DOMContentLoaded', () => {
 
     costKgInput.addEventListener('input', updateTotals);
 
-    // =====================
-    // PDF EXPORT FUNCTION
-    // =====================
+    // ========================
+    // PROJECT SAVE / LOAD
+    // ========================
+    const STORAGE_KEY_CONST = 'vima_calculadora_projects';
+
+    function getProjects() {
+        try { return JSON.parse(localStorage.getItem(STORAGE_KEY_CONST)) || []; }
+        catch { return []; }
+    }
+
+    function saveProject(name) {
+        if (!name.trim()) { alert('Escribe un nombre para el proyecto.'); return; }
+        const projects = getProjects();
+        const project = {
+            id: Date.now().toString(),
+            name: name.trim(),
+            date: new Date().toISOString(),
+            pieces: [...piecesList],
+            costPerKg: parseFloat(costKgInput.value) || 5
+        };
+        projects.push(project);
+        localStorage.setItem(STORAGE_KEY_CONST, JSON.stringify(projects));
+        return project;
+    }
+
+    window.loadProject = function(id) {
+        const projects = getProjects();
+        const project = projects.find(p => p.id === id);
+        if (!project) return;
+        if (piecesList.length > 0 && !confirm(`¿Cargar "${project.name}"? El trabajo actual se perderá.`)) return;
+        piecesList = project.pieces;
+        costKgInput.value = project.costPerKg;
+        renderTable();
+        updateTotals();
+        updateDatalistsUI();
+        closeProjectsModal();
+    };
+
+    window.deleteProject = function(id) {
+        if (!confirm('¿Eliminar este proyecto guardado?')) return;
+        const updated = getProjects().filter(p => p.id !== id);
+        localStorage.setItem(STORAGE_KEY_CONST, JSON.stringify(updated));
+        renderProjectsList();
+    };
+
+    function renderProjectsList() {
+        const container = document.getElementById('projects-list-container');
+        const projects = getProjects();
+        if (projects.length === 0) {
+            container.innerHTML = '<p class="no-projects"><i class="ri-inbox-line"></i><br>No hay proyectos guardados aún.</p>';
+            return;
+        }
+        container.innerHTML = projects.slice().reverse().map(p => {
+            const totalKg = p.pieces.reduce((s, pc) => s + (pc.totalWeight || 0), 0);
+            const dateStr = new Date(p.date).toLocaleDateString('es-VE', { day:'2-digit', month:'short', year:'numeric' });
+            return `
+                <div class="project-item">
+                    <div class="project-item-info">
+                        <strong>${p.name}</strong>
+                        <span>${dateStr} &bull; ${p.pieces.length} piezas &bull; ${totalKg.toFixed(1)} kg</span>
+                    </div>
+                    <div class="project-item-actions">
+                        <button class="btn-load" onclick="loadProject('${p.id}')">Cargar</button>
+                        <button class="btn-del" onclick="deleteProject('${p.id}')">Borrar</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    window.closeProjectsModal = function(e) {
+        if (e && e.target !== document.getElementById('projects-modal')) return;
+        document.getElementById('projects-modal').style.display = 'none';
+    };
+
+    document.getElementById('open-projects-btn').addEventListener('click', () => {
+        renderProjectsList();
+        document.getElementById('projects-modal').style.display = 'flex';
+    });
+
+    document.getElementById('save-project-btn').addEventListener('click', () => {
+        const name = document.getElementById('project-name-input').value;
+        if (saveProject(name)) {
+            document.getElementById('project-name-input').value = '';
+            renderProjectsList();
+            // Visual feedback
+            const btn = document.getElementById('save-project-btn');
+            btn.textContent = '✅ Guardado!';
+            setTimeout(() => { btn.innerHTML = '<i class="ri-save-line"></i> Guardar Actual'; }, 1500);
+        }
+    });
+
     document.getElementById('export-pdf').addEventListener('click', () => {
         if (piecesList.length === 0) { alert('Agrega piezas antes de exportar.'); return; }
         buildPrintView();
